@@ -1,8 +1,9 @@
 import {
-  encodeFilename, getFullUrl, getScriptHome, getScriptSupportUrl, i18n, noop, sendCmd,
+  encodeFilename, getFullUrl, getScriptHome, getScriptSupportUrl, getTab, i18n, sendCmd,
 } from '@/common';
 import {
-  __CODE, HOMEPAGE_URL, INFERRED, kOrigTag, kTag, METABLOCK_RE, SUPPORT_URL, TL_AWAIT, UNWRAP,
+  __CODE, GLOB_ALL, HOMEPAGE_URL, INFERRED, kOrigTag, kTag, METABLOCK_RE, SUPPORT_URL, TL_AWAIT,
+  UNWRAP,
 } from '@/common/consts';
 import { formatDate } from '@/common/date';
 import { mapEntry } from '@/common/object';
@@ -14,7 +15,7 @@ import { injectableRe } from './tabs';
 
 addOwnCommands({
   async NewScript(tabId) {
-    const tab = tabId >= 0 && await browser.tabs.get(tabId).catch(noop) || {};
+    const tab = tabId >= 0 && await getTab(tabId) || {};
     const tabUrl = tab.url;
     const url = injectableRe.test(tabUrl) && `${tabUrl.split(/[#?]/)[0]}*`;
     const { host = 'example.org', domain } = url ? commands.GetTabDomain(url) : {};
@@ -153,7 +154,7 @@ export function getDefaultCustom() {
 
 export function newScript(data) {
   const state = {
-    url: '*://*/*',
+    url: GLOB_ALL,
     name: '',
     ...data,
   };

@@ -85,10 +85,10 @@
           v-for="item in scope.list"
           :key="item.id"
           :class="{
-            disabled: !item.data.config.enabled,
-            failed: item.data.failed,
-            removed: item.data.config.removed,
-            runs: item.data.runs,
+            disabled: !item.config.enabled,
+            failed: item.failed,
+            removed: item.config.removed,
+            runs: item.runs,
             'extras-shown': extras === item,
             'excludes-shown': item.excludes,
           }"
@@ -101,29 +101,29 @@
             @keydown.enter.exact.stop="onEditScript(item)"
             @keydown.space.exact.stop="onToggleScript(item)"
             @click="onToggleScript(item)">
-            <img class="script-icon" :src="item.data.safeIcon">
-            <icon :name="getSymbolCheck(item.data.config.enabled)"></icon>
+            <img class="script-icon" :src="item.safeIcon">
+            <icon :name="getSymbolCheck(item.config.enabled)"></icon>
             <div class="script-name ellipsis"
                  @click.ctrl.exact.stop="onEditScript(item)"
                  @contextmenu.exact.stop.prevent="onEditScript(item)"
                  @mousedown.middle.exact.stop="onEditScript(item)">
-              <sup class="syntax" v-if="item.data.syntax" v-text="i18n('msgSyntaxError')"/>
+              <sup class="syntax" v-if="item.syntax" v-text="i18n('msgSyntaxError')"/>
               {{item.name}}
-              <a v-if="!store.failure && item.data.more"
+              <a v-if="!store.failure && item.more"
                  class="tardy" tabindex="0" :title="TARDY_MATCH"
                  @click.stop="note = note === TARDY_MATCH ? '' : TARDY_MATCH">
                 <Icon name="info"/>
               </a>
-              <a v-if="item.data.grantless"
-                 class="tardy" tabindex="0" :title="item.data.grantless"
-                 @click.stop="note = note === item.data.grantless ? '' : item.data.grantless">
+              <a v-if="item.grantless"
+                 class="tardy" tabindex="0" :title="item.grantless"
+                 @click.stop="note = note === item.grantless ? '' : item.grantless">
                 @
               </a>
             </div>
             <div class="upd ellipsis" :title="item.upd" :data-error="item.updError"/>
           </div>
           <div class="submenu-buttons"
-               v-show="showButtons(item)">
+               :data-show="showButtons(item)">
             <!-- Using a standard tooltip that's shown after a delay to avoid nagging the user -->
             <div class="submenu-button" :tabIndex @click="onEditScript(item)"
                  :title="i18n('buttonEditClickHint')">
@@ -136,6 +136,10 @@
               @click="showExtras">
               <icon name="more"/>
             </div>
+            <a v-if="item.c" class="submenu-button"
+               :href="VM_DOCS_INJECT_INTO"
+               :data-message="INJECT_LEARN"
+               v-bind="EXTERNAL_LINK_PROPS">C</a>
           </div>
           <div v-if="item.excludes" class="excludes-menu mb-1c mr-1c">
             <button v-for="(val, key) in item.excludes[1]" :key
@@ -205,7 +209,7 @@
          :key="url" :href="url" :data-message="url" tabindex="0" v-text="text"
          v-bind="EXTERNAL_LINK_PROPS"/>
       <div v-text="i18n('menuExclude')" tabindex="0" @click="onExclude"/>
-      <div v-text="extras.data.config.removed ? i18n('buttonRestore') : i18n('buttonRemove')"
+      <div v-text="extras.config.removed ? i18n('buttonRestore') : i18n('buttonRemove')"
            tabindex="0"
            @click="onRemoveScript"/>
       <div v-if="'upd' in extras"
@@ -218,7 +222,7 @@
 
 <script setup>
 import { computed, nextTick, onActivated, onMounted, reactive, ref } from 'vue';
-import { VM_DOCS_MATCHING } from '@/common/consts';
+import { VM_DOCS_INJECT_INTO, VM_DOCS_MATCHING } from '@/common/consts';
 import options from '@/common/options';
 import optionsDefaults, {
   kFiltersPopup, kPopupWidth, kUpdateEnabledScriptsOnly,
@@ -241,6 +245,7 @@ let focusBug;
 const HOME = extensionManifest.homepage_url.split('/')[2];
 const NAME = `${extensionManifest.name} ${process.env.VM_VER}`;
 const TARDY_MATCH = i18n('msgTardyMatch');
+const INJECT_LEARN = '@inject-into content\n' + i18n('learnInjectionMode');
 const SCRIPT_CLS = '.script';
 const RUN_AT_ORDER = ['start', 'body', 'end', 'idle'];
 const needsReload = reactive({});
@@ -301,7 +306,7 @@ function reloadTab() {
   return browser.tabs.reload(store.tab.id);
 }
 function makeActiveLinks() {
-  const script = extras.value.data;
+  const script = extras.value;
   const support = getScriptSupportUrl(script);
   const home = !support && getScriptHome(script); // not showing homepage if supportURL exists
   return [
@@ -339,9 +344,9 @@ function makeInjectionScopes() {
       const { enabled, removed, shouldUpdate } = script.config;
       const upd = !removed && getScriptUpdateUrl(script, { enabledOnly });
       const item = {
+        ...script,
         id,
         name: scriptName,
-        data: script,
         key: `${
           enabledFirst && +!enabled
         }${
@@ -391,7 +396,7 @@ function toggleMenu(name) {
 async function showExtras(evt) {
   const el = evt.currentTarget; // get element with @click, not the inner stuff like icon
   const item = el._item;
-  const isPerItem = item.data;
+  const isPerItem = item.id;
   const what = isPerItem ? extras : topExtras;
   if (!what.value) {
     evt.stopPropagation(); // prevent app's @click from resetting extras and topExtras
@@ -429,7 +434,7 @@ function onOpenUrl(e) {
   sendCmdDirectly('TabOpen', { url: el.href }).then(close);
 }
 function onEditScript(item) {
-  sendCmdDirectly('OpenEditor', item.data.props.id).then(close);
+  sendCmdDirectly('OpenEditor', item.props.id).then(close);
 }
 function onCommand(evt) {
   const { type, currentTarget: el } = evt;
@@ -449,7 +454,7 @@ function onCommand(evt) {
   }
 }
 function onToggleScript(item) {
-  const { data } = item;
+  const data = item;
   const enabled = !data.config.enabled;
   const { id } = data.props;
   sendCmdDirectly('UpdateScriptInfo', {
@@ -477,20 +482,20 @@ async function onInjectionFailureFix() {
   window.close();
 }
 function onRemoveScript() {
-  const { config, props: { id } } = extras.value.data;
+  const { config, props: { id } } = extras.value;
   const removed = +!config.removed;
   config.removed = removed;
   sendCmdDirectly('MarkRemoved', { id, removed });
 }
 function onUpdateScript() {
-  sendCmdDirectly('CheckUpdate', { ids: [extras.value.data.props.id] });
+  sendCmdDirectly('CheckUpdate', { ids: [extras.value.props.id] });
 }
 function onUpdateListed() {
   sendCmdDirectly('CheckUpdate', { ids: Object.keys(store.updatableScripts).map(Number) });
 }
 async function onExclude() {
   const item = extras.value;
-  const { data } = item;
+  const data = item;
   const url = data.pageUrl;
   const { host, domain } = await sendCmdDirectly('GetTabDomain', url);
   item.excludes = [
@@ -506,10 +511,10 @@ function onExcludeClose(item) {
 }
 async function onExcludeSave(item, btn) {
   await sendCmdDirectly('UpdateScriptInfo', {
-    id: item.data.props.id,
+    id: item.props.id,
     custom: {
       excludeMatch: [
-        ...item.data.custom.excludeMatch || [],
+        ...item.custom.excludeMatch || [],
         ...[btn || item.excludes[0].trim()].filter(Boolean),
       ],
     },

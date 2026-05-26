@@ -252,9 +252,13 @@ footer {
     .touch & {
       display: flex !important;
     }
+    &:not([data-show]) > :not(a) {
+      display: none;
+    }
   }
   &-button {
     padding: .5rem;
+    line-height: 1;
     background: var(--bg);
     cursor: pointer;
     &:focus {

@@ -14,15 +14,20 @@
     @blur="setScriptFocus(false)">
     <div class="script-icon hidden-xs">
       <a :href="url" :data-hotkey="hotkeys.edit" data-hotkey-table tabIndex="-1">
-        <img :src="script.safeIcon" :data-no-icon="script.noIcon">
+        <img :src="cache.safeIcon" :data-no-icon="cache.noIcon">
       </a>
     </div>
     <!-- We disable native dragging on name to avoid confusion with exec re-ordering.
     Users who want to open a new tab via dragging the link can drag the icon. -->
     <div class="script-info-1 ellipsis">
-      <a v-text="cache.name" v-bind="viewTable && { draggable: false, href: url, tabIndex }"
+      <a v-bind="viewTable && { draggable: false, href: url, tabIndex }"
          :data-order="isRemoved ? null : script.props.position"
-         class="script-name ellipsis" />
+         class="script-name ellipsis">
+        <template v-if="(n = cache.name, m = cache.mark)">{{
+          n.slice(0, m.index)}}<mark v-text="m[0]"/>{{n.slice(m.index + m[0].length)
+        }}</template>
+        <template v-else>{{n}}</template>
+      </a>
       <div class="script-tags" v-if="canRender">
         <a
           v-for="(item, i) in cache[kTag].slice(0, 2)"
@@ -255,10 +260,12 @@ const onTagClick = item => emit('clickTag', item);
 const onToggle = () => emitScript('toggle');
 const onUpdate = async evt => {
   evt.preventDefault(); // for contextmenu
-  if (props.script.$canUpdate !== -1
+  let what = props.script;
+  if (what.$canUpdate !== -1
   || await showConfirmation(i18n('confirmManualUpdate'))) {
-    (evt = [props.script]).force = evt.type !== 'click';
-    emit('update', evt);
+    what = [what];
+    what.force = evt.type !== 'click';
+    emit('update', what);
   }
 };
 /**
@@ -363,6 +370,7 @@ $removedItemHeight: calc(
   &.removed {
     grid-template-columns: $iconSize auto 1fr auto auto;
     height: $removedItemHeight;
+    padding-top: $removedItemPadB;
     padding-bottom: $removedItemPadB;
   }
   &:not(.removed) {
@@ -396,7 +404,9 @@ $removedItemHeight: calc(
     display: flex;
     gap: 8px;
     align-items: center;
-    align-self: flex-start;
+    .script:not(.removed) & {
+      align-self: flex-start;
+    }
   }
   &-name {
     font-weight: 500;
@@ -658,7 +668,7 @@ $removedItemHeight: calc(
     [data-hotkey-table]::after {
       content: none;
     }
-    .size {
+    .script:not(.removed) .size {
       position: absolute;
       bottom: 10px;
       right: 40px;

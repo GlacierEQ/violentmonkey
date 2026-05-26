@@ -4,7 +4,9 @@ import {
   getScriptPrettyUrl, getScriptRunAt, makePause, isValidHttpUrl,
   ignoreChromeErrors,
 } from '@/common';
-import { FETCH_OPTS, INFERRED, TIMEOUT_24HOURS, TIMEOUT_WEEK, TL_AWAIT } from '@/common/consts';
+import {
+  FETCH_OPTS, INFERRED, kTag, TIMEOUT_24HOURS, TIMEOUT_WEEK, TL_AWAIT,
+} from '@/common/consts';
 import { deepSize, forEachEntry, forEachKey, forEachValue } from '@/common/object';
 import pluginEvents from '../plugin/events';
 import {
@@ -159,9 +161,14 @@ addOwnCommands({
       };
       const custom = script.custom = { ...defaultCustom, ...script.custom };
       const { pathMap, tags } = custom;
+      const meta = script.meta ||= {};
+      const tag = meta[kTag];
       if (tags) {
-        custom.tag = tags.split(/\s+/);
+        custom[kTag] = tags.split(/\s+/);
         delete custom.tags;
+      }
+      if (tag && !Array.isArray(tag) /* script installed in an older VM */) {
+        meta[kTag] = tag.split(/\s+/);
       }
       // Patching the bug in 2.27.0 where data: URI was saved as invalid in pathMap
       if (pathMap) for (const url in pathMap) if (isDataUri(url)) delete pathMap[url];
@@ -169,9 +176,6 @@ addOwnCommands({
       maxScriptPosition = Math.max(maxScriptPosition, getInt(script.props.position));
       (script.config.removed ? removedScripts : aliveScripts).push(script);
       // listing all known resource urls in order to remove unused mod keys
-      const {
-        meta = script.meta = {},
-      } = script;
       if (!meta.require) meta.require = [];
       if (!meta.resources) meta.resources = {};
       if (TL_AWAIT in meta) meta[TL_AWAIT] = true; // a string if the script was saved in old VM

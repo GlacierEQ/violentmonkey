@@ -4,13 +4,13 @@
       <nav>
         <div
           v-for="(label, navKey) in navItems" :key="navKey"
-          class="edit-nav-item" :class="{active: nav === navKey}"
+          class="edit-nav-item" :class="{ active: nav === navKey, 'with-icon': navKey === EXTERNALS }"
           @click="nav = navKey"
         >{{
           label
         }}<template v-if="navKey === EXTERNALS">
-            <a @click.stop="onUpdateDeps" class="nav-icon"><icon name="refresh"/></a>
-            <span v-text="depsProgress"/>
+            <a @click.stop="onUpdateDeps"><icon name="refresh"/></a>
+            <span v-text="depsProgress" v-if="depsProgress"/>
           </template>
         </div>
       </nav>
@@ -367,13 +367,15 @@ async function save() {
       message: '',
       bumpDate: true,
     });
-    const newId = res?.where?.id;
+    const newId = res.where.id;
+    const newScript = res.update;
     CM.markClean();
     codeDirty.value = false; // triggers onDirty which sets canSave
     canSave.value = false; // ...and set it explicitly in case codeDirty was false
     frozenNote.value = false;
     errors.value = res.errors;
-    script.value = res.update; // triggers onScript+onChange to handle the new `meta` and `props`
+    newScript.$cache = scr.$cache; // retains kStorageSize, the rest will be updated in initScript later
+    script.value = newScript; // triggers onScript+onChange to handle the new `meta` and `props`
     if (newId && !id) history.replaceState(null, scriptName.value, `${ROUTE_SCRIPTS}/${newId}`);
     fatal.value = null;
   } catch (err) {
@@ -511,6 +513,9 @@ function setupSavePosition({ id: curWndId, tabs }) {
     justify-content: space-between;
     border-bottom: var(--border);
     background: inherit;
+    a.btn-ghost {
+      padding: 0 2px;
+    }
   }
   &-name {
     font-weight: bold;
@@ -534,12 +539,20 @@ function setupSavePosition({ id: curWndId, tabs }) {
       background: var(--fill-0-5);
       box-shadow: 0 -1px 1px var(--fill-4);
     }
-    a.nav-icon {
-      vertical-align: middle;
-      padding: $navPadY $navPadX;
-      margin-right: -$navPadX;
-      &:not(:hover) {
-        color: inherit;
+    &.with-icon {
+      padding-right: 0;
+      > a {
+        padding: $navPadY;
+        margin: -$navPadY 0 -$navPadY $navPadY;
+        &:not(:hover) {
+          color: inherit;
+        }
+        svg {
+          transform: translateY(2px); /* the icon is not centered innately */
+        }
+      }
+      > span {
+        padding-right: $navPadX;
       }
     }
   }
@@ -592,8 +605,8 @@ function setupSavePosition({ id: curWndId, tabs }) {
   .readonly {
     opacity: .75; /* opacity plays well with custom editor colors */
   }
-  a.btn-ghost {
-    padding: 0 2px;
+  [data-num]::after {
+    content: ' (' attr(data-num) ')';
   }
 }
 

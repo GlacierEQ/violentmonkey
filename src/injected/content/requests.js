@@ -2,28 +2,35 @@ import bridge, { addBackgroundHandlers, addHandlers, onScripts } from './bridge'
 import { createObjectURL, decodeResource, makeSafeBlob, sendCmd } from './util';
 import { U8_fromBase64, UA_PROPS, UPLOAD } from '../util';
 
-const {
-  fetch: safeFetch,
-  FileReader: SafeFileReader,
-  FormData: SafeFormData,
-} = global;
-const { arrayBuffer: getArrayBuffer, blob: getBlob } = ResponseProto;
-const BlobProto = SafeBlob[PROTO];
-const getBlobType = describeProperty(BlobProto, 'type').get;
-const getTypedArrayBuffer = describeProperty(getPrototypeOf(SafeUint8Array[PROTO]), 'buffer').get;
-const getReaderResult = describeProperty(SafeFileReader[PROTO], 'result').get;
-const readAsDataURL = SafeFileReader[PROTO].readAsDataURL;
-const fdAppend = SafeFormData[PROTO].append;
-const U8_set = SafeUint8Array[PROTO].set;
 const CHUNKS = 'chunks';
 const LOAD = 'load';
 const LOADEND = 'loadend';
 const isBlobXhr = req => req[kXhrType] === 'blob';
 /** @type {GMReq.Content} */
 const requests = createNullObj();
+let BlobProto, getArrayBuffer, getBlob, getBlobType, getTypedArrayBuffer;
+let SafeFileReader, getReaderResult, readAsDataURL;
+let SafeFormData, fdAppend;
+let U8_set;
+let safeFetch;
 let navigator, getUAData, getUAProps, getHighEntropyValues;
+let SafeDOMParser, parseFromString;
 
 onScripts.push(data => {
+  safeFetch = fetch;
+  BlobProto = SafeBlob[PROTO];
+  SafeFileReader = FileReader;
+  SafeFormData = FormData;
+  U8_set = SafeUint8Array[PROTO].set;
+  fdAppend = SafeFormData[PROTO].append;
+  getArrayBuffer = ResponseProto.arrayBuffer;
+  getBlob = ResponseProto.blob;
+  getBlobType = describeProperty(BlobProto, 'type').get;
+  getReaderResult = describeProperty(SafeFileReader[PROTO], 'result').get;
+  getTypedArrayBuffer = describeProperty(getPrototypeOf(SafeUint8Array[PROTO]), 'buffer').get;
+  readAsDataURL = SafeFileReader[PROTO].readAsDataURL;
+  SafeDOMParser = DOMParser;
+  parseFromString = SafeDOMParser[PROTO].parseFromString;
   // The tab may have a different UA due to a devtools override or about:config
   navigator = global.navigator;
   getUAProps = [];
@@ -74,6 +81,9 @@ addHandlers({
     return sendCmd('HttpRequest', msg);
   },
   AbortRequest: true,
+  ParseHTML(args, realm, nodeRet) {
+    nodeRet[0] = safeApply(parseFromString, new SafeDOMParser(), args);
+  },
   UA: () => navigator::getUAProps[0](),
   UAD() {
     if (getUAData) {
@@ -140,10 +150,11 @@ addBackgroundHandlers({
 async function requestVirtualUrl(msg, url, isDataUri, realm) {
   const { id, [kFileName]: fileName } = msg;
   const events = msg.events[0];
-  const wantsResult = events[LOAD] || events[LOADEND];
+  const wantsResult = events[LOAD] > 0 || events[LOADEND] > 0;
   const wantsBlob = !wantsResult || isBlobXhr(msg);
   const data = !isDataUri ? await importBlob(url, wantsBlob)
-    : wantsResult || url.length > 100e3 ? decodeResource(url, wantsBlob ? SafeBlob : SafeUint8Array)
+    : wantsResult || url.length > 100e3
+      ? decodeResource(url, wantsBlob ? SafeBlob : SafeUint8Array, true)
       : url;
   if (fileName) {
     // download in bg to a) circumvent CSP in Firefox and b) use a single throttled download chain

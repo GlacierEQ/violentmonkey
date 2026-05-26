@@ -22,7 +22,7 @@ loadData();
 render(App);
 
 /**
- * @param {VMScript} script
+ * @param {UIScript} script
  * @param {number[]} sizes
  * @param {string} [code]
  */
@@ -58,7 +58,7 @@ function initScript(script, sizes, code) {
   if (code) $cache.code = code;
   script.$canUpdate = getScriptUpdateUrl(script)
     && (script.config.shouldUpdate ? 1 : -1 /* manual */);
-  loadScriptIcon(script, store, true);
+  loadScriptIcon(script, store, true, $cache);
 }
 
 export function loadData() {

@@ -197,7 +197,7 @@ disabledScriptsSelector:
 disabledScriptsShow:
   description: 'Used as "Disabled scripts: show"'
   message: anzeigen
-editHelpDocumention:
+editHelpDocumentation:
   description: Label in the editor help tab for the documentation link.
   message: >-
     Dokumentation des Benutzerskript-Metadatenblocks und der
@@ -432,7 +432,7 @@ labelBlacklist:
   message: Blacklist
 labelComment:
   description: Label for a comment text in the script editor settings.
-  message: ''
+  message: Kommentar
 labelContributors:
   description: Label for link to contributors.
   message: Mitwirkende
@@ -509,10 +509,14 @@ labelHomepageURL:
   message: 'Homepage-URL:'
 labelHttpOnlyCookie:
   description: Option in Advanced settings to enable HTTP-only cookies for GM_cookie.
-  message: ''
+  message: GM_cookie Zugriff auf HTTP-only-Cookies erlauben
 labelHttpOnlyCookieHint:
   description: Tooltip for the HTTP-only cookie option.
-  message: ''
+  message: >-
+    Wenn aktiviert, können Skripte Cookies mit der HTTP-only-Flag lesen und in
+    diesen schreiben. Dies erlaubt Skripten auf Cookies zuzugreifen, bei denen
+    dieses via JavaScript nicht möglich wäre. Nutzen Sie dies mit Vorsicht, da
+    dies Sicherheitsrisiken bergen kann.
 labelIconURL:
   description: Label for the input.
   message: 'Icon-URL:'
@@ -571,6 +575,9 @@ labelNotifyUpdatesGlobal:
   message: >-
     Skriptspezifische Benachrichtigung ignorieren ("Einstellungen"-Tab im
     Editor)
+labelPageMenuCommands:
+  description: Checkbox item in page context menu and option to enable script commands.
+  message: Skriptbefehle im Seiten-Kontextmenü anzeigen
 labelPrivacyPolicy:
   description: Label of link to privacy policy
   message: Datenschutzrichtlinie
@@ -596,10 +603,10 @@ labelRunAtDefault:
   message: (Standard)
 labelScriptOptionRequired:
   description: Shown after some global options in settings
-  message: ''
+  message: (nur für Skripte, die diese Option in ihren Einstellungen aktiviert haben)
 labelScriptOptionRequiredGlobal:
   description: Shown after some options in a script's settings
-  message: ''
+  message: (diese Option muss ebenfalls in den globalen Einstellungen aktiviert sein)
 labelScriptTemplate:
   description: Label for custom script template.
   message: Benutzerdefinierte Skriptvorlage
@@ -646,6 +653,24 @@ labelSyncReauthorize:
 labelSyncRevoke:
   description: Label for button to revoke authorization for a service.
   message: Entziehen
+labelSyncS3AccessKeyId:
+  description: Label for S3 access key ID input.
+  message: 'Zugriffsschlüssel-ID: '
+labelSyncS3Bucket:
+  description: Label for S3 bucket name input.
+  message: 'Bucket: '
+labelSyncS3Endpoint:
+  description: Label for custom S3-compatible endpoint URL input (leave blank for AWS).
+  message: 'Benutzerdefinierter Endpunkt: '
+labelSyncS3Prefix:
+  description: Label for S3 key prefix input (folder within the bucket).
+  message: 'Schlüssel-Präfix: '
+labelSyncS3Region:
+  description: Label for S3 region input.
+  message: 'Region: '
+labelSyncS3SecretAccessKey:
+  description: Label for S3 secret access key input.
+  message: 'Geheimer Zugriffsschlüssel: '
 labelSyncScriptStatus:
   description: Label for option to sync script status.
   message: Skriptstatus-Sync
@@ -660,7 +685,7 @@ labelSyncUsername:
   message: 'Benutzername: '
 labelTags:
   description: Label for custom tags. Don't translate @tag.
-  message: ''
+  message: '@tag / Tags'
 labelTheme:
   description: Label for the visual theme option.
   message: 'Theme: '
@@ -1111,7 +1136,9 @@ updateScript:
   message: Aktualisierung
 updateScriptForced:
   description: Tooltip for the update icon.
-  message: ''
+  message: >-
+    Rechtsklick oder langer Touch, um ein Update inklusive der Abhängigkeiten zu
+    erzwingen
 updateScriptsAll:
   description: Command/button to update all scripts.
   message: Alle Skripte aktualisieren

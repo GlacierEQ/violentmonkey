@@ -63,6 +63,7 @@ async function setPopup(data, { [kFrameId]: frameId, url }) {
       let v;
       const { id } = script.props;
       const state = idMap[id];
+      const content = script.c = state === CONTENT && state;
       const more = state === MORE;
       const badRealm = state === ID_BAD_REALM;
       const renderedScript = scope.find(({ props }) => props.id === id);
@@ -76,7 +77,7 @@ async function setPopup(data, { [kFrameId]: frameId, url }) {
           if (i >= 0) frameScripts.splice(i, 1);
         }
       }
-      script.runs = state === CONTENT || state === PAGE;
+      script.runs = content || state === PAGE;
       script.pageUrl = url; // each frame has its own URL
       script.failed = badRealm || state === ID_INJECTING || more;
       if (grantless && (v = grantless[id]) && delete v.window && (v = Object.keys(v).join(', '))) {
